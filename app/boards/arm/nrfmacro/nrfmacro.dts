@@ -121,7 +121,7 @@
 	};
 };
 
-&spi2 {
+&spi1 {
   /* nrfmacro.dts */
 	compatible = "nordic,nrf-spim";
   sck-pin = <22>;
@@ -151,4 +151,4 @@
   }; 
 };
 
-nrfmacro_spi: &spi2 {};
+nrfmacro_spi: &spi1 {};

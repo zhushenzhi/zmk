@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "shieldtest.dtsi"
+#include "epdtest.dtsi"
 
 &default_transform {
-	col-offset = <18>;
+	col-offset = <17>;
 };

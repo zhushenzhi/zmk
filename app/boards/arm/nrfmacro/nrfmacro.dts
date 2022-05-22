@@ -131,7 +131,7 @@
   miso-pin = <5>;
 
   /* shield.dtsi */
-  // status = "okay";
+  status = "disabled";
 
   // spi-device: gooddisplay GDEW0102T4
   epd: il0323@0 {

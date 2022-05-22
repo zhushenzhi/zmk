@@ -4,8 +4,12 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "shieldtest.dtsi"
+#include "encodertest.dtsi"
 
 &default_transform {
-	col-offset = <26>;
+	col-offset = <18>;
+};
+
+&right_encoder {
+	status = "okay";
 };

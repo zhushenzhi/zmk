@@ -21,8 +21,8 @@
 		&kp Z &kp X &kp C &kp V &kp B				      &kp N &kp M  &kp CMMA &kp DOT &kp SLASH
     &kp KP_N1 &kp KP_N2                       &kp KP_N3 &kp KP_N4 
 		>;
+      sensor-bindings = <&inc_dec_kp PG_UP PG_DN &inc_dec_kp PG_UP PG_DN>;
 		};
 
-      sensor-bindings = <&inc_dec_kp A B &inc_dec_kp PG_UP PG_DN>;
 	};
 };

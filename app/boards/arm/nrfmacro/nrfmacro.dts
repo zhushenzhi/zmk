@@ -189,7 +189,7 @@ nrfmacro_i2c: &i2c1 {};
         reg = <0>;
         label = "cirque trackpad";
         spi-max-frequency = <1000000>;
-        dr-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
+        dr-gpios = <&gpio1 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
         invert-x;
         sleep;
         /* no-taps; */

@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2020 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/outputs.h>
+#include <dt-bindings/zmk/mouse.h>
+
+/ { 
+    keymap {
+        compatible = "zmk,keymap";
+                
+     		default_layer {
+        		bindings = <
+                &none &kp A
+             		>;
+        sensor-bindings = <&inc_dec_kp UP DOWN &inc_dec_kp UP DOWN>;
+        slider-bindings = <&slv &slv>;
+        trackball-bindings = <&tmv>;
+  	    };
+   	};
+};

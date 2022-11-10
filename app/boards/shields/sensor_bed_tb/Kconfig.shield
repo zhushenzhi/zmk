@@ -1,0 +1,8 @@
+# Copyright (c) 2020 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+config SENSOR_BED_TB_LEFT
+	def_bool $(shields_list_contains,sensor_bed_tb_left)
+
+config SENSOR_BED_TB_RIGHT
+	def_bool $(shields_list_contains,sensor_bed_tb_right)

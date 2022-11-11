@@ -25,7 +25,7 @@
 #include <drivers/slider.h>
 #endif
 
-LOG_MODULE_REGISTER(kscan_cap1203, CONFIG_ZMK_LOG_LEVEL);
+LOG_MODULE_REGISTER(kscan_cap1203, CONFIG_CAP1203_LOG_LEVEL);
 
 /* List of important registers and associated commands */
 #define REG_PRODUCT_ID 0xFD
@@ -54,8 +54,15 @@ LOG_MODULE_REGISTER(kscan_cap1203, CONFIG_ZMK_LOG_LEVEL);
 #define B_MULT_T1_POS   3
 #define B_MULT_T0_POS 2
 
+#define REG_CONFIGURATION 0x20
+#define MAX_DUR_EN_POS 3
+
 #define REG_CONFIGURATION_2 0x44
 #define RELEASE_INT_POS 0
+
+#define REG_SENSOR_INPUT_CONFIG 0x22
+
+#define REG_RECALIBRATION_CONFIG 0x2F
 
 /* device driver data */
 struct kscan_cap1203_config {
@@ -189,11 +196,65 @@ inline static int kscan_cap1203_configure_multiple_touch(const struct i2c_dt_spe
 
   return i2c_reg_write_byte_dt(i2c, REG_MULT_CONFIG, val);
 }
+
 /* Enable/disable generation of release interrupt */
 static int kscan_cap1203_enable_release_interrupt(const struct i2c_dt_spec *i2c,\
                                                   bool enable)
 {
   return kscan_cap1203_bit_write(i2c, REG_CONFIGURATION_2, RELEASE_INT_POS, !enable);
+}
+
+/* Enable/disable auto-calib based on touch-duration */
+// Fix the stuck button issue when a conductive object is put on top of the sensor
+// for a long time
+// arg duration (4-bit int), see Tab. 5-12
+static int kscan_cap1203_enable_max_duration_recalib(const struct i2c_dt_spec *i2c, \
+                                                     bool enable, uint8_t duration)
+{
+  int err;
+  if(enable) {
+    uint8_t val;
+
+    if((err=i2c_reg_read_byte_dt(i2c, REG_SENSOR_INPUT_CONFIG, &val))) {
+      return err;
+    }
+
+    val = (val & 0xF) | ((duration & 0xF) < 4);
+    if((err=i2c_reg_write_byte_dt(i2c, REG_SENSOR_INPUT_CONFIG, val))) {
+      return err;
+    }
+  }
+
+  err = kscan_cap1203_bit_write(i2c, REG_CONFIGURATION, MAX_DUR_EN_POS, enable);
+	if (err < 0) {
+		return err;
+	}
+
+}
+
+/* Enable/disable negative delta auto-recalibration */
+// ess Tab. 5-30
+static inline int kscan_cap1203_enable_negative_delta_recalib(\
+                                   const struct i2c_dt_spec *i2c, \
+                                   bool enable)
+{
+  uint8_t val;
+  int err;
+
+  if((err=i2c_reg_read_byte_dt(i2c, REG_RECALIBRATION_CONFIG, &val))) {
+    return err;
+  }
+
+  if( enable ) { // the default value should be sufficient
+    WRITE_BIT(val, 4, 0);
+    WRITE_BIT(val, 3, 1);
+  }
+  else {
+    WRITE_BIT(val, 4, 1);
+    WRITE_BIT(val, 3, 1);
+  }
+
+  return i2c_reg_write_byte_dt(i2c, REG_RECALIBRATION_CONFIG, val);
 }
 
 
@@ -254,6 +315,7 @@ static int kscan_cap1203_read(const struct device *dev)
   // read general status
 #ifdef CONFIG_ZMK_USB_LOGGING
   print_register(&config->i2c, REG_GENERAL_STATUS, "General Status");
+  print_register(&config->i2c, REG_RECALIBRATION_CONFIG, "Recalibration Config");
 #endif
 
   // read sensor input status
@@ -264,6 +326,7 @@ static int kscan_cap1203_read(const struct device *dev)
 	LOG_INF("Initial input status: 0x%x (old: 0x%x)", input, data->touch_state);
 
   // check the state change, only pressed event can be discovered at this stage
+  // see Fig. 4-3 and Fig. 4-4
   for( int ch=0; ch < 3; ch++ ) {
     if(kscan_cap1203_change_state(&data->touch_state, &input, ch, &pressed)) {
       data->callback(dev, 0, ch, pressed);
@@ -582,6 +645,13 @@ static int kscan_cap1203_init(const struct device *dev)
   r = kscan_cap1203_configure_multiple_touch(&config->i2c, true, 3);
 	if (r < 0) {
     LOG_ERR("Could not configure multi-touch circuitry");
+		return r;
+	}
+
+  // configure negative delta recalibration
+  r = kscan_cap1203_enable_negative_delta_recalib(&config->i2c, false);
+	if (r < 0) {
+    LOG_ERR("Could not configure negative delta recalibration");
 		return r;
 	}
 

@@ -64,6 +64,8 @@ LOG_MODULE_REGISTER(kscan_cap1203, CONFIG_CAP1203_LOG_LEVEL);
 
 #define REG_RECALIBRATION_CONFIG 0x2F
 
+#define REG_SENSITIVITY_CONTROL_CONFIG 0x1F
+
 /* device driver data */
 struct kscan_cap1203_config {
 	struct i2c_dt_spec i2c;
@@ -641,6 +643,13 @@ static int kscan_cap1203_init(const struct device *dev)
 		return r;
 	}
 
+  // configure sensitivity
+	r = i2c_reg_write_byte_dt(&config->i2c, REG_SENSITIVITY_CONTROL_CONFIG, 0x4F);
+	if (r < 0) {
+    LOG_ERR("Could not configure sensitivity");
+		return r;
+	}
+
   // configure multi-touch circuitry
   r = kscan_cap1203_configure_multiple_touch(&config->i2c, true, 3);
 	if (r < 0) {
@@ -649,11 +658,11 @@ static int kscan_cap1203_init(const struct device *dev)
 	}
 
   // configure negative delta recalibration
-  r = kscan_cap1203_enable_negative_delta_recalib(&config->i2c, false);
-	if (r < 0) {
-    LOG_ERR("Could not configure negative delta recalibration");
-		return r;
-	}
+  /* r = kscan_cap1203_enable_negative_delta_recalib(&config->i2c, false); */
+	/* if (r < 0) { */
+  /*   LOG_ERR("Could not configure negative delta recalibration"); */
+	/* 	return r; */
+	/* } */
 
   // End of init
   LOG_INF("Init success");

@@ -11,6 +11,25 @@
 	col-offset = <1>;
 };
 
+/* Define kscan pins */
+/ {
+	kscan0: kscan0 {
+		compatible = "zmk,kscan-gpio-direct";
+		label = "KSCAN0";
+
+		input-gpios
+	  = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+    ;
+	};
+};
+
+&kscan {
+		touch_keys {
+      kscan = <&slider_right>;
+      column-offset = <1>;
+		};
+};
+
 /* Enable the right slider and define its pins */
 &slider_right {
   status = "okay";

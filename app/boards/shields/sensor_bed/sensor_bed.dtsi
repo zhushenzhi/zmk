@@ -18,22 +18,26 @@
 /* global matrix transform */
 	default_transform: keymap_transform_0 {
 		compatible = "zmk,matrix-transform";
-		columns = <2>;
+		columns = <5>;
 		rows = <1>;
 		map = <
           RC(0,0) RC(0,1)
+          RC(0,2) RC(0,3) RC(0,4)
 		>;
 
 	};
 
   /* Scan matrix declaration */
 	kscan: kscan {
-		compatible = "zmk,kscan-gpio-direct";
+		compatible = "zmk,kscan-composite";
 		label = "KSCAN";
+		rows = <1>;
+		columns = <5>;
 
-		input-gpios
-	  = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
-    ;
+    /* There is a key matrix by default */
+		normal_keys {
+			kscan = <&kscan0>;
+		};
 	};
 
   /* Configure sliders (both split can have a slider) */

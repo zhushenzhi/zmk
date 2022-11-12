@@ -10,17 +10,32 @@
 #include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/mouse.h>
 
+#define DEFAULT 0
+#define MSE 1
+
 / { 
     keymap {
         compatible = "zmk,keymap";
                 
      		default_layer {
         		bindings = <
-                &none &kp A
+                &none &calib
+                &kp A &kp B &lt MSE C
              		>;
         sensor-bindings = <&inc_dec_kp UP DOWN &inc_dec_kp UP DOWN>;
         slider-bindings = <&slv &slv>;
         trackball-bindings = <&tmv>;
   	    };
+
+        mouse_layer {
+        		bindings = <
+                &none &mkp LCLK
+                &trans &kp M &trans
+             		>;
+        sensor-bindings = <&inc_dec_kp UP DOWN &inc_dec_kp UP DOWN>;
+        slider-bindings = <&slv &slv>;
+        trackball-bindings = <&tmv>;
+  	    };
+
    	};
 };

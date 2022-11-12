@@ -68,6 +68,12 @@ LOG_MODULE_REGISTER(kscan_cap1203, CONFIG_CAP1203_LOG_LEVEL);
 
 #define REG_SENSITIVITY_CONTROL_CONFIG 0x1F
 
+#define REG_SENSOR_INPUT_THRESHOLD 0x30
+
+#define REG_SENSOR_INPUT_DELTA_COUNT 0x10
+
+#define REG_SENSOR_INPUT_BASE_COUNT 0x50
+
 /* device driver data */
 struct kscan_cap1203_config {
 	struct i2c_dt_spec i2c;
@@ -221,7 +227,7 @@ inline static int kscan_cap1203_force_calibration(const struct i2c_dt_spec *i2c,
 }
 
 /* Enable/disable generation of release interrupt */
-static int kscan_cap1203_enable_release_interrupt(const struct i2c_dt_spec *i2c,\
+inline static int kscan_cap1203_enable_release_interrupt(const struct i2c_dt_spec *i2c,\
                                                   bool enable)
 {
   return kscan_cap1203_bit_write(i2c, REG_CONFIGURATION_2, RELEASE_INT_POS, !enable);
@@ -231,7 +237,7 @@ static int kscan_cap1203_enable_release_interrupt(const struct i2c_dt_spec *i2c,
 // Fix the stuck button issue when a conductive object is put on top of the sensor
 // for a long time
 // arg duration (4-bit int), see Tab. 5-12
-static int kscan_cap1203_enable_max_duration_recalib(const struct i2c_dt_spec *i2c, \
+inline static int kscan_cap1203_enable_max_duration_recalib(const struct i2c_dt_spec *i2c, \
                                                      bool enable, uint8_t duration)
 {
   int err;
@@ -280,9 +286,14 @@ static inline int kscan_cap1203_enable_negative_delta_recalib(\
   return i2c_reg_write_byte_dt(i2c, REG_RECALIBRATION_CONFIG, val);
 }
 
+/* Configure the threshold */
+inline static int kscan_cap1203_set_threshold(const struct i2c_dt_spec *i2c, int8_t ch, uint8_t thresh)
+{
+  return i2c_reg_write_byte_dt(i2c, REG_SENSOR_INPUT_THRESHOLD+ch, thresh);
+}
 
 /* De-assert alert line and clear the sensor status input register */
-static int kscan_cap1203_clear_interrupt(const struct i2c_dt_spec *i2c)
+inline static int kscan_cap1203_clear_interrupt(const struct i2c_dt_spec *i2c)
 {
 	uint8_t ctrl;
 	int r;
@@ -298,7 +309,7 @@ static int kscan_cap1203_clear_interrupt(const struct i2c_dt_spec *i2c)
 }
 
 /* Enable/disable the alert line */
-static int kscan_cap1203_enable_interrupt(const struct i2c_dt_spec *i2c, bool enable)
+inline static int kscan_cap1203_enable_interrupt(const struct i2c_dt_spec *i2c, bool enable)
 {
 	uint8_t intr = enable ? INTERRUPT_ENABLE : INTERRUPT_DISABLE;
 
@@ -324,7 +335,7 @@ inline static bool kscan_cap1203_change_state(uint8_t *old_input,  \
 }
 
 /* read the current touch status */
-static int kscan_cap1203_read(const struct device *dev)
+inline static int kscan_cap1203_read(const struct device *dev)
 {
 	const struct kscan_cap1203_config *config = dev->config;
 	struct kscan_cap1203_data *data = dev->data;
@@ -339,6 +350,19 @@ static int kscan_cap1203_read(const struct device *dev)
 #ifdef CONFIG_ZMK_USB_LOGGING
   print_register(&config->i2c, REG_GENERAL_STATUS, "General Status");
   print_register(&config->i2c, REG_RECALIBRATION_CONFIG, "Recalibration Config");
+  print_register(&config->i2c, REG_SENSITIVITY_CONTROL_CONFIG, "Sensitivity");
+
+  print_register(&config->i2c, REG_SENSOR_INPUT_BASE_COUNT, "Ch_1 BaseCount");
+  print_register(&config->i2c, REG_SENSOR_INPUT_THRESHOLD, "Ch_1 Threshold");
+  print_register(&config->i2c, REG_SENSOR_INPUT_DELTA_COUNT, "Ch_1 DeltaCount");
+
+  print_register(&config->i2c, REG_SENSOR_INPUT_BASE_COUNT+1, "Ch_2 BaseCount");
+  print_register(&config->i2c, REG_SENSOR_INPUT_THRESHOLD+1, "Ch_2 Threshold");
+  print_register(&config->i2c, REG_SENSOR_INPUT_DELTA_COUNT+1, "Ch_2 DeltaCount");
+
+  print_register(&config->i2c, REG_SENSOR_INPUT_BASE_COUNT+2, "Ch_3 BaseCount");
+  print_register(&config->i2c, REG_SENSOR_INPUT_THRESHOLD+2, "Ch_3 Threshold");
+  print_register(&config->i2c, REG_SENSOR_INPUT_DELTA_COUNT+2, "Ch_3 DeltaCount");
 #endif
 
   // read sensor input status
@@ -502,7 +526,7 @@ static int kscan_cap1203_read(const struct device *dev)
 }
 
 /* the actual work to process each alert or polling */
-static void kscan_cap1203_work_handler(struct k_work *work)
+inline static void kscan_cap1203_work_handler(struct k_work *work)
 {
 	struct kscan_cap1203_data *data = CONTAINER_OF(work, struct kscan_cap1203_data, work);
 
@@ -665,9 +689,25 @@ static int kscan_cap1203_init(const struct device *dev)
 	}
 
   // configure sensitivity
-	r = i2c_reg_write_byte_dt(&config->i2c, REG_SENSITIVITY_CONTROL_CONFIG, 0x4F);
+	r = i2c_reg_write_byte_dt(&config->i2c, REG_SENSITIVITY_CONTROL_CONFIG, 0x1F);
 	if (r < 0) {
     LOG_ERR("Could not configure sensitivity");
+		return r;
+	}
+
+  // configure delta threshold
+  // see Tab. 5-32 for the valued encoding
+  // By default, it collectively set the threshold for all 3 chs by setting ch1
+  // Individual setting of ch2 and ch3 should be took out after ch1
+  r = kscan_cap1203_set_threshold(&config->i2c, 0, 0x60);
+	if (r < 0) {
+    LOG_ERR("Could not configure threshold");
+		return r;
+	}
+
+  r = kscan_cap1203_set_threshold(&config->i2c, 2, 0x20);
+	if (r < 0) {
+    LOG_ERR("Could not configure ch3 threshold");
 		return r;
 	}
 

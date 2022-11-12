@@ -62,6 +62,8 @@ LOG_MODULE_REGISTER(kscan_cap1203, CONFIG_CAP1203_LOG_LEVEL);
 
 #define REG_SENSOR_INPUT_CONFIG 0x22
 
+#define REG_CALIBRATION_ACTIVATION 0x26
+
 #define REG_RECALIBRATION_CONFIG 0x2F
 
 #define REG_SENSITIVITY_CONTROL_CONFIG 0x1F
@@ -197,6 +199,25 @@ inline static int kscan_cap1203_configure_multiple_touch(const struct i2c_dt_spe
   }
 
   return i2c_reg_write_byte_dt(i2c, REG_MULT_CONFIG, val);
+}
+
+/* Force calibration */
+// Arg 'num' : 0 -> ch1, 1-> ch2, 2-> ch3, -1: all ch
+inline static int kscan_cap1203_force_calibration(const struct i2c_dt_spec *i2c, \
+                                                  int num)
+{
+  uint8_t val=0;
+
+  if(num != 0 && num != 1 && num != 2) {
+    WRITE_BIT(val, 0, 1);
+    WRITE_BIT(val, 1, 1);
+    WRITE_BIT(val, 2, 1);
+  }
+  else{
+    WRITE_BIT(val, num, 1);
+  }
+
+  return i2c_reg_write_byte_dt(i2c, REG_CALIBRATION_ACTIVATION, val);
 }
 
 /* Enable/disable generation of release interrupt */
@@ -663,6 +684,13 @@ static int kscan_cap1203_init(const struct device *dev)
   /*   LOG_ERR("Could not configure negative delta recalibration"); */
 	/* 	return r; */
 	/* } */
+
+  // force calibration of all channels, needed for RESET behavior
+  r = kscan_cap1203_force_calibration(&config->i2c, -1);
+	if (r < 0) {
+    LOG_ERR("Could not force calibration of all channels");
+		return r;
+	}
 
   // End of init
   LOG_INF("Init success");

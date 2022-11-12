@@ -20,6 +20,7 @@
 #include <zmk/mouse.h>
 #include <dt-bindings/zmk/mouse.h>
 #include <drivers/kscan.h>
+#include <zmk/events/calibration_event.h>
 
 #if defined(CONFIG_CAP1203_MIX_MODE) || defined(CONFIG_CAP1203_SLIDER_MODE)
 #include <drivers/slider.h>
@@ -212,6 +213,7 @@ inline static int kscan_cap1203_configure_multiple_touch(const struct i2c_dt_spe
 inline static int kscan_cap1203_force_calibration(const struct i2c_dt_spec *i2c, \
                                                   int num)
 {
+  LOG_DBG("");
   uint8_t val=0;
 
   if(num != 0 && num != 1 && num != 2) {
@@ -789,3 +791,18 @@ static const struct kscan_driver_api kscan_cap1203_driver_api = {
 #endif
 
 DT_INST_FOREACH_STATUS_OKAY(KSCAN_CAP1203_INIT)
+
+/******************************************************************/
+#define KSCAN_CAP1203_CALIB(index) \
+     kscan_cap1203_force_calibration(&(kscan_cap1203_config_##index.i2c), -1);
+
+int kscan_cap1203_calib_listener(const zmk_event_t *eh) {
+  LOG_DBG("forced calibration");
+    if (as_zmk_calibration_event(eh) != NULL) {
+      DT_INST_FOREACH_STATUS_OKAY(KSCAN_CAP1203_CALIB)
+    }
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(kscan_cap1203, kscan_cap1203_calib_listener);
+ZMK_SUBSCRIPTION(kscan_cap1203, zmk_calibration_event);

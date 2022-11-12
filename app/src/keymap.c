@@ -236,6 +236,7 @@ const char *zmk_keymap_layer_label(uint8_t layer) {
 
 int invoke_locally(struct zmk_behavior_binding *binding, struct zmk_behavior_binding_event event,
                    bool pressed) {
+  LOG_DBG("");
     if (pressed) {
         return behavior_keymap_binding_pressed(binding, event);
     } else {
@@ -280,8 +281,10 @@ int zmk_keymap_apply_position_state(uint8_t source, int layer, uint32_t position
 
     switch (locality) {
     case BEHAVIOR_LOCALITY_CENTRAL:
+      LOG_DBG("Locality: central");
         return invoke_locally(&binding, event, pressed);
     case BEHAVIOR_LOCALITY_EVENT_SOURCE:
+      LOG_DBG("Locality: event_source");
 #if ZMK_BLE_IS_CENTRAL
         if (source == ZMK_POSITION_STATE_CHANGE_SOURCE_LOCAL) {
             return invoke_locally(&binding, event, pressed);
@@ -292,6 +295,7 @@ int zmk_keymap_apply_position_state(uint8_t source, int layer, uint32_t position
         return invoke_locally(&binding, event, pressed);
 #endif
     case BEHAVIOR_LOCALITY_GLOBAL:
+      LOG_DBG("Locality: global");
 #if ZMK_BLE_IS_CENTRAL
         for (int i = 0; i < ZMK_BLE_SPLIT_PERIPHERAL_COUNT; i++) {
             zmk_split_bt_invoke_behavior(i, &binding, event, pressed);

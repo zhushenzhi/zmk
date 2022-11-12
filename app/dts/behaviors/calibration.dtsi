@@ -1,0 +1,17 @@
+/*
+ * Copyright (c) 2020 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/zmk/reset.h>
+
+/ {
+	behaviors {
+		calib: behavior_calib {
+			compatible = "zmk,behavior-calib";
+			label = "CALIBRATION";
+			#binding-cells = <0>;
+		};
+	};
+};

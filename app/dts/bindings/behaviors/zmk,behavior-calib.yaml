@@ -1,0 +1,8 @@
+# Copyright (c) 2020 The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: Force re-calibration of the capasitive sensors
+
+compatible: "zmk,behavior-calib"
+
+include: zero_param.yaml

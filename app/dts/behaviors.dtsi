@@ -24,3 +24,4 @@
 #include <behaviors/mouse_scroll.dtsi>
 #include <behaviors/slider.dtsi>
 #include <behaviors/trackball.dtsi>
+#include <behaviors/calibration.dtsi>

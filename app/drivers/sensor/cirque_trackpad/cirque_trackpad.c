@@ -9,7 +9,8 @@
 
 LOG_MODULE_REGISTER(pinnacle, CONFIG_SENSOR_LOG_LEVEL);
 
-static int pinnacle_seq_read(const struct device *dev, const uint8_t start, uint8_t *buf, const uint8_t len) {
+static int pinnacle_seq_read(const struct device *dev, const uint8_t start, uint8_t *buf,
+                             const uint8_t len) {
     uint8_t tx_buffer[len + 3], rx_dummy[3];
     tx_buffer[0] = PINNACLE_READ | start;
     memset(&tx_buffer[1], PINNACLE_AUTOINC, len + 1);
@@ -23,27 +24,27 @@ static int pinnacle_seq_read(const struct device *dev, const uint8_t start, uint
         .buffers = &tx_buf,
         .count = 1,
     };
-	struct spi_buf rx_buf[2] = {
-		{
-			.buf = rx_dummy,
-			.len = 3,
-		},
-		{
-			.buf = buf,
-			.len = len,
-		},
-	};
-	const struct spi_buf_set rx = {
-		.buffers = rx_buf,
-		.count = 2,
-	};
+    struct spi_buf rx_buf[2] = {
+        {
+            .buf = rx_dummy,
+            .len = 3,
+        },
+        {
+            .buf = buf,
+            .len = len,
+        },
+    };
+    const struct spi_buf_set rx = {
+        .buffers = rx_buf,
+        .count = 2,
+    };
     const struct pinnacle_data *data = dev->data;
     const struct pinnacle_config *config = dev->config;
     return spi_transceive(data->spi, &config->spi_config, &tx, &rx);
 }
 
 static int pinnacle_write(const struct device *dev, const uint8_t addr, const uint8_t val) {
-    uint8_t tx_buffer[2] = { PINNACLE_WRITE | addr, val };
+    uint8_t tx_buffer[2] = {PINNACLE_WRITE | addr, val};
 
     const struct spi_buf tx_buf = {
         .buf = tx_buffer,
@@ -58,13 +59,24 @@ static int pinnacle_write(const struct device *dev, const uint8_t addr, const ui
     return spi_write(data->spi, &config->spi_config, &tx);
 }
 
-static int pinnacle_channel_get(const struct device *dev, enum sensor_channel chan, struct sensor_value *val) {
+static int pinnacle_channel_get(const struct device *dev, enum sensor_channel chan,
+                                struct sensor_value *val) {
     const struct pinnacle_data *data = dev->data;
     switch (chan) {
-    case SENSOR_CHAN_POS_DX: val->val1 = data->dx; break;
-    case SENSOR_CHAN_POS_DY: val->val1 = data->dy; break;
-    case SENSOR_CHAN_PRESS: val->val1 = data->btn; break;
-    default: return -ENOTSUP;
+    case SENSOR_CHAN_POS_DX:
+        val->val1 = data->dx;
+        val->val2 = 0;
+        break;
+    case SENSOR_CHAN_POS_DY:
+        val->val1 = data->dy;
+        val->val2 = 0;
+        break;
+    case SENSOR_CHAN_PRESS:
+        val->val1 = data->btn;
+        val->val2 = 0;
+        break;
+    default:
+        return -ENOTSUP;
     }
     return 0;
 }
@@ -86,23 +98,30 @@ static int pinnacle_sample_fetch(const struct device *dev, enum sensor_channel c
 #ifdef CONFIG_PINNACLE_TRIGGER
 static void set_int(const struct device *dev, const bool en) {
     const struct pinnacle_config *config = dev->config;
-    int ret = gpio_pin_interrupt_configure(config->dr_port, config->dr_pin, en ? GPIO_INT_LEVEL_ACTIVE : GPIO_INT_DISABLE);
-    /* int ret = gpio_pin_interrupt_configure(config->dr_port, config->dr_pin, en ? GPIO_INT_EDGE_TO_ACTIVE : GPIO_INT_DISABLE); */
+    int ret = gpio_pin_interrupt_configure(config->dr_port, config->dr_pin,
+                                           en ? GPIO_INT_LEVEL_ACTIVE : GPIO_INT_DISABLE);
+    /* int ret = gpio_pin_interrupt_configure(config->dr_port, config->dr_pin, en ?
+     * GPIO_INT_EDGE_TO_ACTIVE : GPIO_INT_DISABLE); */
     if (ret < 0) {
         LOG_ERR("can't set interrupt");
     }
 }
 
-static int pinnacle_trigger_set(const struct device *dev, const struct sensor_trigger *trig, sensor_trigger_handler_t handler) {
+static int pinnacle_trigger_set(const struct device *dev, const struct sensor_trigger *trig,
+                                sensor_trigger_handler_t handler) {
     struct pinnacle_data *data = dev->data;
 
-    set_int(dev, false);
     if (trig->type != SENSOR_TRIG_DATA_READY) {
         return -ENOTSUP;
     }
-    data->data_ready_trigger = trig;
-    data->data_ready_handler = handler;
-    set_int(dev, true);
+
+    set_int(dev, false);
+
+    if (handler) {
+        data->data_ready_trigger = trig;
+        data->data_ready_handler = handler;
+        set_int(dev, true);
+    }
     return 0;
 }
 
@@ -159,10 +178,10 @@ static int pinnacle_init(const struct device *dev) {
     data->spi = DEVICE_DT_GET(SPI_BUS);
 
     // todo: wait for power-on or not
-    pinnacle_write(dev, PINNACLE_STATUS1, 0);   // Clear CC after power-on
+    pinnacle_write(dev, PINNACLE_STATUS1, 0); // Clear CC after power-on
 
     // disable z-idle packets
-    pinnacle_write(dev, PINNACLE_Z_IDLE, 0);    // No Z-Idle packets
+    pinnacle_write(dev, PINNACLE_Z_IDLE, 0); // No Z-Idle packets
 
     // set sleep-mode
     if (config->sleep_en) {
@@ -200,7 +219,7 @@ static int pinnacle_init(const struct device *dev) {
     k_sem_init(&data->gpio_sem, 0, UINT_MAX);
 
     k_thread_create(&data->thread, data->thread_stack, CONFIG_PINNACLE_THREAD_STACK_SIZE,
-                    (k_thread_entry_t) pinnacle_thread, (void *) dev, 0, NULL,
+                    (k_thread_entry_t)pinnacle_thread, (void *)dev, 0, NULL,
                     K_PRIO_COOP(CONFIG_PINNACLE_THREAD_PRIORITY), 0, K_NO_WAIT);
 #elif defined(CONFIG_PINNACLE_TRIGGER_GLOBAL_THREAD)
     k_work_init(&data->work, pinnacle_work_cb);
@@ -212,27 +231,29 @@ static int pinnacle_init(const struct device *dev) {
 
 static const struct sensor_driver_api pinnacle_driver_api = {
 #if CONFIG_PINNACLE_TRIGGER
-	.trigger_set = pinnacle_trigger_set,
+    .trigger_set = pinnacle_trigger_set,
 #endif
-	.sample_fetch = pinnacle_sample_fetch,
-	.channel_get = pinnacle_channel_get,
+    .sample_fetch = pinnacle_sample_fetch,
+    .channel_get = pinnacle_channel_get,
 };
 
 static struct pinnacle_data pinnacle_data;
 static const struct pinnacle_config pinnacle_config = {
-    .spi_cs = {
-        .gpio_dev = DEVICE_DT_GET(DT_GPIO_CTLR_BY_IDX(SPI_BUS, cs_gpios, SPI_REG)),
-        .gpio_pin = DT_GPIO_PIN_BY_IDX(SPI_BUS, cs_gpios, SPI_REG),
-        .delay = 0,
-        .gpio_dt_flags = DT_GPIO_FLAGS_BY_IDX(SPI_BUS, cs_gpios, SPI_REG),
-    },
-    .spi_config = {
-        .cs = &pinnacle_config.spi_cs,
-        .frequency = DT_INST_PROP(0, spi_max_frequency),
-        .slave = DT_INST_REG_ADDR(0),
-        /* .operation = (SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB), */
-        .operation = (SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_MODE_CPHA),
-    },
+    .spi_cs =
+        {
+            .gpio_dev = DEVICE_DT_GET(DT_GPIO_CTLR_BY_IDX(SPI_BUS, cs_gpios, SPI_REG)),
+            .gpio_pin = DT_GPIO_PIN_BY_IDX(SPI_BUS, cs_gpios, SPI_REG),
+            .delay = 0,
+            .gpio_dt_flags = DT_GPIO_FLAGS_BY_IDX(SPI_BUS, cs_gpios, SPI_REG),
+        },
+    .spi_config =
+        {
+            .cs = &pinnacle_config.spi_cs,
+            .frequency = DT_INST_PROP(0, spi_max_frequency),
+            .slave = DT_INST_REG_ADDR(0),
+            /* .operation = (SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB), */
+            .operation = (SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_TRANSFER_MSB | SPI_MODE_CPHA),
+        },
     .invert_x = DT_INST_PROP(0, invert_x),
     .invert_y = DT_INST_PROP(0, invert_y),
     .sleep_en = DT_INST_PROP(0, sleep),
@@ -244,4 +265,5 @@ static const struct pinnacle_config pinnacle_config = {
 #endif
 };
 
-DEVICE_DT_INST_DEFINE(0, pinnacle_init, NULL, &pinnacle_data, &pinnacle_config, POST_KERNEL, CONFIG_SENSOR_INIT_PRIORITY, &pinnacle_driver_api);
+DEVICE_DT_INST_DEFINE(0, pinnacle_init, NULL, &pinnacle_data, &pinnacle_config, POST_KERNEL,
+                      CONFIG_SENSOR_INIT_PRIORITY, &pinnacle_driver_api);

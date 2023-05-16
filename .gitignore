@@ -4,6 +4,6 @@
 /tools
 /zephyr
 /zmk-config
-/build
+/build*
 *.DS_Store
 __pycache__

@@ -8,11 +8,12 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 static sys_slist_t widgets = SYS_SLIST_STATIC_INIT(&widgets);
 
-const char* text = "hello world!";
+const char* left_text = "gulai's corne";
+const char* right_text = "have a nice day!";
 
 int zmk_widget_fix_symbol_init(struct zmk_widget_fix_symbol *widget, lv_obj_t *parent){
     widget->obj = lv_label_create(parent);
-    lv_label_set_text(widget->obj, text);
+    lv_label_set_text(widget->obj, right_text);
     sys_slist_append(&widgets, &widget->node);
     return 0;
 }

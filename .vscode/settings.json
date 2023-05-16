@@ -1,7 +1,22 @@
 {
   "files.associations": {
+    "typeinfo": "cpp",
+    "*.go": "go",
     "*.overlay": "dts",
-    "*.keymap": "dts"
+    "*.keymap": "dts",
+    "il0323_regs.h": "c",
+    "stdarg.h": "c",
+    "fix_symbol.h": "c",
+    "layer_status.h": "c",
+    "display.h": "c",
+    "layer_state_changed.h": "c",
+    "regex": "c",
+    "limits.h": "c",
+    "stdio_private.h": "c",
+    "output_status.h": "c",
+    "battery_status.h": "c",
+    "log.h": "c",
+    "ble.h": "c"
   },
   "python.formatting.provider": "black",
   "[c]": {

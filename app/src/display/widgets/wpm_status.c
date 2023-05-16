@@ -31,7 +31,7 @@ void set_wpm_symbol(lv_obj_t *label, struct wpm_status_state state) {
     snprintf(text, sizeof(text), "%i", state.wpm);
 
     lv_label_set_text(label, text);
-    lv_obj_align(label, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
 }
 
 void wpm_status_update_cb(struct wpm_status_state state) {

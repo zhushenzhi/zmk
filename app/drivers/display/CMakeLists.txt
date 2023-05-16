@@ -2,3 +2,4 @@
 # SPDX-License-Identifier: MIT
 
 zephyr_sources_ifdef(CONFIG_IL0323      il0323.c)
+#zephyr_library_sources_ifdef(CONFIG_SSD1306		ssd1306.c)

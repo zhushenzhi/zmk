@@ -24,3 +24,33 @@
         label = "BATTERY";
     };
 };
+
+// &spi0 {
+//     /* nrfmacro.dts */
+//       compatible = "nordic,nrf-spim";
+//     sck-pin = <22>;
+//     mosi-pin = <24>;
+//     cs-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
+//     // not used, but required by spim binding; can be reuesd in the keymap for normal key press
+//     miso-pin = <5>;
+  
+//     /* shield.dtsi */
+//     status = "disabled";
+  
+//     // spi-device: gooddisplay GDEW0102T4
+//     shield_epd: ssd16xx@0 {
+//       compatible = "solomon,ssd1681";
+//       reg = <0>;
+//       label = "DISPLAY";
+//       spi-max-frequency = <4000000>;
+  
+//       height = <200>;
+//       width = <200>;
+//       reset-gpios = <&gpio0 8  GPIO_ACTIVE_LOW>;
+//       dc-gpios    = <&gpio0 17 GPIO_ACTIVE_LOW>; //17
+//       busy-gpios  = <&gpio0 6  GPIO_ACTIVE_LOW>;
+
+//     }; 
+//   };
+
+// pro_micro_spi: &spi0 {};
